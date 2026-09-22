@@ -27,9 +27,15 @@ Bearer tokens, defined in `packages/framework/src/auth.ts` (overridable via `TOO
 - `GET /api/health` (no auth) → `{status:"ok", app:"<name>", time}`.
 - Inspect DB/audit rows from repo root: `node -e "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.auditEvent.findMany().then(r=>console.log(r)).finally(()=>p.$disconnect())"` (escape `$` in shell).
 
+## Real tools built on the framework
+- `kyc-queue`: `GET/POST /api/cases`, `GET/PATCH /api/cases/[id]` (PATCH `{decision: approve|reject|escalate}`); `kyc:read`/`kyc:write` perms; `KycCase` model; queue UI at `/`, detail+audit trail at `/cases/[id]`.
+- `chargebacks`: `GET/POST /api/disputes`, `GET/PATCH /api/disputes/[id]` (PATCH `{action: submit_evidence|win|lose}`); `chargebacks:read`/`chargebacks:write` perms; `Chargeback` model; disputes UI at `/`, detail+audit trail at `/disputes/[id]`.
+- Tests: `npx vitest run apps/<name>` — they hit the real dev.db, so run `npx prisma migrate deploy` first on a fresh checkout (CI does this in `.github/workflows/ci.yml`).
+
 ## Scaffolding
-- `npm run new-tool -- <kebab-case-name>` copies `apps/starter` → `apps/<name>`, rewrites package name + layout title, strips `.next`/`node_modules`. Then `npm install` (creates workspace symlink) before dev.
-- Known quirk: the copied `app/api/health/route.ts` still calls `createHealthHandler("starter")`, so a new tool's health endpoint reports `app:"starter"` until manually edited.
+- `npm run new-tool -- <kebab-case-name>` copies `apps/starter` → `apps/<name>`, rewrites package name + layout title + `createHealthHandler("<name>")`, strips `.next`/`node_modules`. Then `npm install` (creates workspace symlink) before dev. Verify the health handler reports the new app name.
+- New tools must import a `lib/permissions.ts` that calls `registerRole` to grant `<tool>:read`/`<tool>:write` onto viewer/builder — never edit `ROLE_PERMISSIONS` in the framework.
+- New entities go in `packages/framework/prisma/schema.prisma` + `npm run db:migrate`; remove the copied `app/api/tools` route (starter-registry demo, not the tool's own API).
 - Removing a scaffolded `apps/<name>` dir leaves a stale `"extraneous": true` entry in `package-lock.json` after `npm install` — `git checkout package-lock.json` to clean.
 
 ## Devin Secrets Needed
