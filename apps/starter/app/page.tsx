@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@internal-tools/framework";
 
 export const dynamic = "force-dynamic";
 

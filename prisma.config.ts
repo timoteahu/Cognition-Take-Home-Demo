@@ -4,8 +4,8 @@ import { defineConfig } from "prisma/config";
 
 export default defineConfig({
   earlyAccess: true,
-  schema: "prisma/schema.prisma",
+  schema: "packages/framework/prisma/schema.prisma",
   migrations: {
-    path: "prisma/migrations",
+    path: "packages/framework/prisma/migrations",
   },
 });
