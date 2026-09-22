@@ -15,6 +15,22 @@ model Tool {
   createdAt   DateTime @default(now())
 }
 
+model KycCase {
+  id           Int       @id @default(autoincrement())
+  customerId   String
+  customerName String
+  riskTier     String    @default("standard") // low | standard | high
+  status       String    @default("pending") // pending | approved | rejected | escalated
+  assigneeId   String?
+  decidedById  String?
+  decidedAt    DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+}
+
 model AuditEvent {
   id        Int      @id @default(autoincrement())
   actorId   String
