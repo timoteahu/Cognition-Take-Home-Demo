@@ -12,20 +12,38 @@ export default async function Home() {
         Starter app — tools are loaded from SQLite via Prisma.
       </p>
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {tools.map((tool) => (
-          <li
-            key={tool.id}
-            style={{
-              border: "1px solid #e5e5e5",
-              borderRadius: 8,
-              padding: "12px 16px",
-              marginBottom: 8,
-            }}
-          >
-            <strong>{tool.name}</strong>
-            <div style={{ color: "#666", fontSize: 14 }}>{tool.description}</div>
-          </li>
-        ))}
+        {tools.map((tool) => {
+          const card = (
+            <>
+              <strong>{tool.name}</strong>
+              <div style={{ color: "#666", fontSize: 14 }}>
+                {tool.description}
+              </div>
+            </>
+          );
+          return (
+            <li
+              key={tool.id}
+              style={{
+                border: "1px solid #e5e5e5",
+                borderRadius: 8,
+                padding: "12px 16px",
+                marginBottom: 8,
+              }}
+            >
+              {tool.url ? (
+                <a
+                  href={tool.url}
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  {card}
+                </a>
+              ) : (
+                card
+              )}
+            </li>
+          );
+        })}
       </ul>
     </main>
   );
