@@ -31,6 +31,25 @@ model KycCase {
   @@index([status])
 }
 
+model Chargeback {
+  id             Int       @id @default(autoincrement())
+  transactionId  String    @unique
+  cardholderName String
+  amountCents    Int
+  currency       String    @default("USD")
+  reason         String
+  status         String    @default("open") // open | evidence_submitted | won | lost
+  deadline       DateTime?
+  assigneeId     String?
+  resolvedById   String?
+  resolvedAt     DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+}
+
 model AuditEvent {
   id        Int      @id @default(autoincrement())
   actorId   String
