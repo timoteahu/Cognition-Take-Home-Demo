@@ -30,7 +30,8 @@ Bearer tokens, defined in `packages/framework/src/auth.ts` (overridable via `TOO
 ## Real tools built on the framework
 - `kyc-queue`: `GET/POST /api/cases`, `GET/PATCH /api/cases/[id]` (PATCH `{decision: approve|reject|escalate}`); `kyc:read`/`kyc:write` perms; `KycCase` model; queue UI at `/`, detail+audit trail at `/cases/[id]`.
 - `chargebacks`: `GET/POST /api/disputes`, `GET/PATCH /api/disputes/[id]` (PATCH `{action: submit_evidence|win|lose}`); `chargebacks:read`/`chargebacks:write` perms; `Chargeback` model; disputes UI at `/`, detail+audit trail at `/disputes/[id]`.
-- Tests: `npx vitest run apps/<name>` — they hit the real dev.db, so run `npx prisma migrate deploy` first on a fresh checkout (CI does this in `.github/workflows/ci.yml`).
+- Tests: `npx vitest run` at root runs all suites (framework + per-app); they hit the real dev.db, so run `npx prisma migrate deploy` first on a fresh checkout (CI does this in `.github/workflows/ci.yml`).
+- Vitest writes rows permanently into dev.db (cases/disputes/audit events) — verify UI counts and seeded expectations BEFORE running vitest, or expect drift.
 
 ## Scaffolding
 - `npm run new-tool -- <kebab-case-name>` copies `apps/starter` → `apps/<name>`, rewrites package name + layout title + `createHealthHandler("<name>")`, strips `.next`/`node_modules`. Then `npm install` (creates workspace symlink) before dev. Verify the health handler reports the new app name.
