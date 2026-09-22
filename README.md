@@ -10,15 +10,28 @@ run — the database is a local SQLite file via Prisma.
 apps/                  # one folder per tool
   starter/             # reference tool (Next.js App Router)
 packages/
-  framework/           # shared infra: db client, bearer auth, RBAC, withAuth()
+  framework/           # shared infra: db, auth, RBAC, audit, health, testing
     prisma/            # shared schema, migrations, seed (SQLite dev.db)
+    test/              # framework test suite (vitest)
+scripts/
+  create-tool.mjs      # scaffolds a new tool under apps/
 ```
 
-Tools consume `@internal-tools/framework` for the pieces every internal tool
-needs — `prisma` (shared client), `getUser`/`requireUser` (token auth),
-`requirePermission` (role-based permissions), and `withAuth` (route wrapper that
-enforces both). `apps/starter/app/api/tools/route.ts` shows the pattern:
-`GET` requires `tools:read`, `POST` requires `tools:write`.
+## What the framework provides
+
+Every tool gets these for free by importing `@internal-tools/framework`:
+
+- `prisma` — shared database client (schema in `packages/framework/prisma`)
+- `getUser` / `requireUser` — bearer-token auth (`TokenStore` interface is
+  swappable for real SSO/directory in production)
+- `requirePermission` / `registerRole` — role-based permissions
+- `withAuth(permission, handler)` — wraps a route handler so auth + permission
+  checks are one line (see `apps/starter/app/api/tools/route.ts`)
+- `logAudit` / `listAuditEvents` — append-only audit trail on the shared db
+  (who did what — required for regulated workflows like KYC/refunds)
+- `createHealthHandler(name)` — standard `GET /api/health` endpoint per tool
+- `makeTestUser` / `authedRequest` / `tokenStoreFor` — test helpers so every
+  tool tests authz the same way
 
 ## Setup
 
@@ -35,15 +48,23 @@ Dev tokens (framework defaults, dev-only): `dev-viewer-token` (read),
 
 ```bash
 curl -H "Authorization: Bearer dev-builder-token" localhost:3000/api/tools
+curl localhost:3000/api/health
 ```
+
+## Checks
+
+`npm run lint`, `npm test`, and `npm run build` all run across workspaces and
+are enforced by `.github/workflows/ci.yml` on every PR.
 
 ## Adding a new tool
 
-1. `mkdir apps/<name>` and copy `apps/starter` as the starting point.
-2. Keep business logic in the app's own routes/components; use the framework
-   for auth, permissions, and the db client — don't reimplement them.
-3. If the tool needs new data, extend `packages/framework/prisma/schema.prisma`
-   and run `npm run db:migrate`.
+```bash
+npm run new-tool -- <kebab-case-name>   # scaffolds apps/<name> from starter
+```
+
+Then: keep business logic in the app's own routes/components; use the framework
+for auth, permissions, audit, and the db client — don't reimplement them. New
+data shapes go in `packages/framework/prisma/schema.prisma` + `npm run db:migrate`.
 
 `packages/framework` is pure TypeScript (no Next.js dependency), so the same
 auth/permissions/db layer can back any app type, not just Next.
