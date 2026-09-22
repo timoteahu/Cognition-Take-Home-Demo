@@ -45,6 +45,12 @@ for (const file of ["app/layout.tsx"]) {
   );
 }
 
+const healthPath = join(dest, "app/api/health/route.ts");
+writeFileSync(
+  healthPath,
+  readFileSync(healthPath, "utf8").replace('createHealthHandler("starter")', `createHealthHandler("${name}")`),
+);
+
 rmSync(join(dest, ".next"), { recursive: true, force: true });
 
 console.log(`Created apps/${name}`);
