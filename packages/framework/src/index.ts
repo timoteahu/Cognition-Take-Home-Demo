@@ -15,3 +15,6 @@ export {
 export { withAuth } from "./withAuth";
 export type { AuthedHandler, RouteContext } from "./withAuth";
 export { ForbiddenError, HttpError, UnauthorizedError } from "./errors";
+export { logAudit, listAuditEvents } from "./audit";
+export { createHealthHandler } from "./health";
+export { makeTestUser, authedRequest, tokenStoreFor } from "./testing";

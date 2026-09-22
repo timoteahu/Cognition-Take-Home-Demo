@@ -14,3 +14,15 @@ model Tool {
   url         String?
   createdAt   DateTime @default(now())
 }
+
+model AuditEvent {
+  id        Int      @id @default(autoincrement())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+}
