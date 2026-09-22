@@ -1,0 +1,11 @@
+// Loads .env so `env("DATABASE_URL")` in schema.prisma resolves for CLI commands.
+import "dotenv/config";
+import { defineConfig } from "prisma/config";
+
+export default defineConfig({
+  earlyAccess: true,
+  schema: "prisma/schema.prisma",
+  migrations: {
+    path: "prisma/migrations",
+  },
+});
