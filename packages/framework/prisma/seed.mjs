@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { demoCases, demoDisputes } from "../../../apps/hub/lib/demo-data.ts";
+import { demoCases, demoDisputes } from "../../../apps/hub/lib/demo-data.mjs";
 
 const prisma = new PrismaClient();
 

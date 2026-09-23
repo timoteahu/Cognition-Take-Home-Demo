@@ -5,7 +5,7 @@ import {
   withAuth,
 } from "@internal-tools/framework";
 import "../../../../../lib/permissions";
-import { demoCases, demoDisputes } from "../../../../../lib/demo-data";
+import { demoCases, demoDisputes } from "../../../../../lib/demo-data.mjs";
 
 const TOOLS = {
   kyc: {

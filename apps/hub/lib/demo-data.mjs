@@ -78,7 +78,7 @@ export const DISPUTE_NAMES = [
   "Aisha Rahman",
 ];
 
-export const RISK_TIERS = ["low", "standard", "high"] as const;
+export const RISK_TIERS = ["low", "standard", "high"];
 
 export const REASONS = [
   "fraudulent",
@@ -86,4 +86,4 @@ export const REASONS = [
   "duplicate",
   "subscription_canceled",
   "credit_not_processed",
-] as const;
+];

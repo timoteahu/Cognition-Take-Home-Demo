@@ -8,7 +8,7 @@ import {
   KYC_NAMES,
   REASONS,
   RISK_TIERS,
-} from "../lib/demo-data";
+} from "../lib/demo-data.mjs";
 
 // Demo-only token — the framework's seeded builder credential.
 const DEV_TOKEN = "dev-builder-token";
