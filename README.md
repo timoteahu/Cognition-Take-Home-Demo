@@ -15,6 +15,7 @@ packages/
   framework/           # shared infra: db, auth, RBAC, audit, health, testing
     prisma/            # shared schema, migrations, seed (SQLite dev.db)
     test/              # framework test suite (vitest)
+  ui/                  # shared design system (theme tokens + React primitives)
 scripts/
   create-tool.mjs      # scaffolds a new tool under apps/
 ```
@@ -34,6 +35,9 @@ Every tool gets these for free by importing `@internal-tools/framework`:
 - `createHealthHandler(name)` — standard `GET /api/health` endpoint per tool
 - `makeTestUser` / `authedRequest` / `tokenStoreFor` — test helpers so every
   tool tests authz the same way
+
+UI primitives (`AppShell`, `Card`, `Badge`, `StatGrid`, …) live in
+`@internal-tools/ui` so every tool shares one look.
 
 ## Setup
 

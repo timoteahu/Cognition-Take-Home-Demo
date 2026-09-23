@@ -1,4 +1,5 @@
 import { prisma } from "@internal-tools/framework";
+import { AppShell, Badge, Card, PageHeader } from "@internal-tools/ui";
 
 export const dynamic = "force-dynamic";
 
@@ -6,45 +7,30 @@ export default async function Home() {
   const tools = await prisma.tool.findMany({ orderBy: { name: "asc" } });
 
   return (
-    <main style={{ maxWidth: 640, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1>Internal Tools</h1>
-      <p style={{ color: "#666" }}>
-        Starter app — tools are loaded from SQLite via Prisma.
-      </p>
-      <ul style={{ listStyle: "none", padding: 0 }}>
+    <AppShell title="Internal Tools">
+      <PageHeader
+        title="Internal Tools"
+        description="Every internal tool registered on the platform. Click a tool to open it."
+      />
+      <div className="tool-grid">
         {tools.map((tool) => {
-          const card = (
-            <>
-              <strong>{tool.name}</strong>
-              <div style={{ color: "#666", fontSize: 14 }}>
-                {tool.description}
-              </div>
-            </>
-          );
+          const host = tool.url ? new URL(tool.url).host : null;
           return (
-            <li
-              key={tool.id}
-              style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: 8,
-                padding: "12px 16px",
-                marginBottom: 8,
-              }}
-            >
-              {tool.url ? (
-                <a
-                  href={tool.url}
-                  style={{ color: "inherit", textDecoration: "none" }}
-                >
-                  {card}
-                </a>
-              ) : (
-                card
-              )}
-            </li>
+            <Card key={tool.id} href={tool.url ?? undefined}>
+              <div className="card-title">{tool.name}</div>
+              <div className="card-desc">{tool.description}</div>
+              <div className="card-footer">
+                {host ? (
+                  <Badge tone="info" mono>{host}</Badge>
+                ) : (
+                  <Badge tone="neutral">not deployed</Badge>
+                )}
+                {tool.url ? <span className="accent-link">Open →</span> : null}
+              </div>
+            </Card>
           );
         })}
-      </ul>
-    </main>
+      </div>
+    </AppShell>
   );
 }

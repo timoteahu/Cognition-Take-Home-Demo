@@ -1,11 +1,34 @@
 import { listAuditEvents, prisma } from "@internal-tools/framework";
+import {
+  AppShell,
+  Badge,
+  Card,
+  EmptyState,
+  Meta,
+  PageHeader,
+} from "@internal-tools/ui";
+import type { BadgeTone } from "@internal-tools/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
+const STATUS_TONE: Record<string, BadgeTone> = {
+  open: "warn",
+  evidence_submitted: "info",
+  won: "ok",
+  lost: "danger",
+};
+
+const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? "http://localhost:3000";
+
 const money = (cents: number, currency: string) =>
-  `${(cents / 100).toFixed(2)} ${currency}`;
+  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+    cents / 100,
+  );
+
+const fmtTime = (d: Date) =>
+  d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function DisputeDetail({
   params,
@@ -24,72 +47,85 @@ export default async function DisputeDetail({
   });
 
   return (
-    <main style={{ maxWidth: 720, margin: "4rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link href="/" style={{ color: "#666" }}>
-          ← back to disputes
-        </Link>
-      </p>
-      <h1>
-        Dispute #{dispute.id} — {dispute.cardholderName}
-      </h1>
-      <dl
-        style={{
-          border: "1px solid #e5e5e5",
-          borderRadius: 8,
-          padding: "12px 16px",
-        }}
-      >
-        <dt style={{ color: "#666", fontSize: 13 }}>Transaction</dt>
-        <dd>{dispute.transactionId}</dd>
-        <dt style={{ color: "#666", fontSize: 13 }}>Amount</dt>
-        <dd>{money(dispute.amountCents, dispute.currency)}</dd>
-        <dt style={{ color: "#666", fontSize: 13 }}>Reason</dt>
-        <dd>{dispute.reason}</dd>
-        <dt style={{ color: "#666", fontSize: 13 }}>Status</dt>
-        <dd>
-          {dispute.status.replace("_", " ")}
-          {dispute.resolvedById ? ` (by ${dispute.resolvedById})` : ""}
-        </dd>
-        {dispute.deadline ? (
-          <>
-            <dt style={{ color: "#666", fontSize: 13 }}>Response due</dt>
-            <dd>{dispute.deadline.toISOString().slice(0, 10)}</dd>
-          </>
-        ) : null}
-        {dispute.notes ? (
-          <>
-            <dt style={{ color: "#666", fontSize: 13 }}>Notes</dt>
-            <dd>{dispute.notes}</dd>
-          </>
-        ) : null}
-      </dl>
-
-      <h2>Audit trail</h2>
-      {events.length === 0 ? (
-        <p style={{ color: "#666" }}>No recorded activity yet.</p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {events.map((e) => (
-            <li
-              key={e.id}
-              style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: 8,
-                padding: "10px 16px",
-                marginBottom: 8,
-                fontSize: 14,
-              }}
-            >
-              <strong>{e.action}</strong> by {e.actorId}
-              <div style={{ color: "#666", fontSize: 13 }}>
-                {e.createdAt.toISOString()}
-                {e.metadata ? ` — ${e.metadata}` : ""}
+    <AppShell title="Chargeback Manager" hubUrl={HUB_URL}>
+      <Link href="/" className="back-link">
+        ← back to disputes
+      </Link>
+      <PageHeader
+        title={`Dispute #${dispute.id} — ${dispute.cardholderName}`}
+        actions={
+          <Badge tone={STATUS_TONE[dispute.status] ?? "neutral"}>
+            {dispute.status.replaceAll("_", " ")}
+          </Badge>
+        }
+      />
+      <Card>
+        <div className="def-grid">
+          <div>
+            <div className="def-label">Transaction</div>
+            <div className="def-value mono">{dispute.transactionId}</div>
+          </div>
+          <div>
+            <div className="def-label">Amount</div>
+            <div className="def-value mono">
+              {money(dispute.amountCents, dispute.currency)}
+            </div>
+          </div>
+          <div>
+            <div className="def-label">Reason</div>
+            <div className="def-value">{dispute.reason.replaceAll("_", " ")}</div>
+          </div>
+          <div>
+            <div className="def-label">Status</div>
+            <div className="def-value">
+              {dispute.status.replaceAll("_", " ")}
+              {dispute.resolvedById ? ` (by ${dispute.resolvedById})` : ""}
+            </div>
+          </div>
+          {dispute.deadline ? (
+            <div>
+              <div className="def-label">Response due</div>
+              <div className="def-value">
+                {dispute.deadline.toISOString().slice(0, 10)}
               </div>
-            </li>
+            </div>
+          ) : null}
+          {dispute.notes ? (
+            <div>
+              <div className="def-label">Notes</div>
+              <div className="def-value">{dispute.notes}</div>
+            </div>
+          ) : null}
+        </div>
+      </Card>
+
+      <h2 className="section-title">
+        Audit trail <span className="count">({events.length})</span>
+      </h2>
+      {events.length === 0 ? (
+        <EmptyState title="No recorded activity yet." />
+      ) : (
+        <div className="stack">
+          {events.map((e) => (
+            <Card key={e.id} className="card-compact">
+              <div className="row-between">
+                <span>
+                  <strong>{e.action}</strong>{" "}
+                  <Badge tone="neutral">{e.actorId}</Badge>
+                </span>
+                <span className="mono" style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+                  {fmtTime(e.createdAt)}
+                </span>
+              </div>
+              {e.metadata ? (
+                <Meta className="card-desc">
+                  <code>{e.metadata}</code>
+                </Meta>
+              ) : null}
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
-    </main>
+    </AppShell>
   );
 }

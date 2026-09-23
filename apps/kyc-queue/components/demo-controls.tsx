@@ -58,27 +58,18 @@ export function DemoControls() {
       }),
     );
 
-  const buttonStyle = {
-    border: "1px solid #ddd",
-    borderRadius: 6,
-    background: "#fff",
-    padding: "8px 14px",
-    cursor: "pointer",
-    fontSize: 14,
-  } as const;
-
   return (
-    <div style={{ margin: "16px 0" }}>
-      <button style={{ ...buttonStyle, marginRight: 8 }} onClick={addRandom} disabled={busy !== null}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <button className="btn btn-primary" onClick={addRandom} disabled={busy !== null}>
         Add random case
       </button>
-      <button style={buttonStyle} onClick={reset} disabled={busy !== null}>
+      <button className="btn btn-secondary" onClick={reset} disabled={busy !== null}>
         Reset demo data
       </button>
       {(busy || message) && (
-        <div style={{ color: "#666", fontSize: 13, marginTop: 6 }}>
+        <span style={{ color: "var(--fg-muted)", fontSize: 13 }}>
           {busy ? `${busy}…` : message}
-        </div>
+        </span>
       )}
     </div>
   );

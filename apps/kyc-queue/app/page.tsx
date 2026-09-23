@@ -1,11 +1,35 @@
 import { prisma } from "@internal-tools/framework";
+import {
+  AppShell,
+  Badge,
+  Card,
+  Meta,
+  PageHeader,
+  StatGrid,
+} from "@internal-tools/ui";
+import type { BadgeTone } from "@internal-tools/ui";
 import Link from "next/link";
 
 import { DemoControls } from "../components/demo-controls";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_ORDER = ["pending", "escalated", "approved", "rejected"];
+const STATUS_ORDER = ["pending", "escalated", "approved", "rejected"] as const;
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+  pending: "warn",
+  escalated: "info",
+  approved: "ok",
+  rejected: "danger",
+};
+
+const RISK_TONE: Record<string, BadgeTone> = {
+  high: "danger",
+  standard: "neutral",
+  low: "ok",
+};
+
+const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? "http://localhost:3000";
 
 export default async function KycQueue() {
   const cases = await prisma.kycCase.findMany({
@@ -15,36 +39,47 @@ export default async function KycQueue() {
   for (const c of cases) counts.set(c.status, (counts.get(c.status) ?? 0) + 1);
 
   return (
-    <main style={{ maxWidth: 720, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1>KYC Review Queue</h1>
-      <p style={{ color: "#666" }}>
-        {cases.length} cases —{" "}
-        {STATUS_ORDER.map((s) => `${counts.get(s) ?? 0} ${s}`).join(", ")}
-      </p>
-      <DemoControls />
-      <ul style={{ listStyle: "none", padding: 0 }}>
+    <AppShell title="KYC Review Queue" hubUrl={HUB_URL}>
+      <PageHeader
+        title="KYC Review Queue"
+        description="Triage and decision customer identity-verification cases."
+        actions={<DemoControls />}
+      />
+      <StatGrid
+        stats={[
+          { label: "Total", value: cases.length, tone: "neutral" },
+          ...STATUS_ORDER.map((s) => ({
+            label: s,
+            value: counts.get(s) ?? 0,
+            tone: STATUS_TONE[s],
+          })),
+        ]}
+      />
+      <div className="stack">
         {cases.map((c) => (
-          <li
-            key={c.id}
-            style={{
-              border: "1px solid #e5e5e5",
-              borderRadius: 8,
-              padding: "12px 16px",
-              marginBottom: 8,
-            }}
-          >
-            <Link href={`/cases/${c.id}`} style={{ textDecoration: "none" }}>
-              <strong>
+          <Card key={c.id}>
+            <div className="row-between">
+              <Link href={`/cases/${c.id}`} className="card-title">
                 #{c.id} — {c.customerName}
-              </strong>
-            </Link>
-            <div style={{ color: "#666", fontSize: 14 }}>
-              {c.customerId} · risk {c.riskTier} · {c.status}
-              {c.decidedById ? ` · decided by ${c.decidedById}` : ""}
+              </Link>
+              <Badge tone={STATUS_TONE[c.status] ?? "neutral"}>{c.status}</Badge>
             </div>
-          </li>
+            <Meta className="card-desc">
+              <span>{c.customerId}</span>
+              <span>·</span>
+              <span>
+                risk <Badge tone={RISK_TONE[c.riskTier] ?? "neutral"}>{c.riskTier}</Badge>
+              </span>
+              {c.decidedById ? (
+                <>
+                  <span>·</span>
+                  <span>decided by {c.decidedById}</span>
+                </>
+              ) : null}
+            </Meta>
+          </Card>
         ))}
-      </ul>
-    </main>
+      </div>
+    </AppShell>
   );
 }
