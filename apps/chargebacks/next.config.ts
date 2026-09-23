@@ -6,7 +6,7 @@ import type { NextConfig } from "next";
 loadEnv({ path: path.resolve(process.cwd(), "../../.env") });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@internal-tools/framework"],
+  transpilePackages: ["@internal-tools/framework", "@internal-tools/ui"],
 };
 
 export default nextConfig;

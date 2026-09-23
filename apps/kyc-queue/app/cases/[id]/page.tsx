@@ -1,8 +1,29 @@
 import { listAuditEvents, prisma } from "@internal-tools/framework";
+import {
+  AppShell,
+  Badge,
+  Card,
+  EmptyState,
+  Meta,
+  PageHeader,
+} from "@internal-tools/ui";
+import type { BadgeTone } from "@internal-tools/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+  pending: "warn",
+  escalated: "info",
+  approved: "ok",
+  rejected: "danger",
+};
+
+const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? "http://localhost:3000";
+
+const fmtTime = (d: Date) =>
+  d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
 
 export default async function KycCaseDetail({
   params,
@@ -21,64 +42,71 @@ export default async function KycCaseDetail({
   });
 
   return (
-    <main style={{ maxWidth: 720, margin: "4rem auto", padding: "0 1rem" }}>
-      <p>
-        <Link href="/" style={{ color: "#666" }}>
-          ← back to queue
-        </Link>
-      </p>
-      <h1>
-        Case #{kycCase.id} — {kycCase.customerName}
-      </h1>
-      <dl
-        style={{
-          border: "1px solid #e5e5e5",
-          borderRadius: 8,
-          padding: "12px 16px",
-        }}
-      >
-        <dt style={{ color: "#666", fontSize: 13 }}>Customer ID</dt>
-        <dd>{kycCase.customerId}</dd>
-        <dt style={{ color: "#666", fontSize: 13 }}>Risk tier</dt>
-        <dd>{kycCase.riskTier}</dd>
-        <dt style={{ color: "#666", fontSize: 13 }}>Status</dt>
-        <dd>
-          {kycCase.status}
-          {kycCase.decidedById ? ` (by ${kycCase.decidedById})` : ""}
-        </dd>
-        {kycCase.notes ? (
-          <>
-            <dt style={{ color: "#666", fontSize: 13 }}>Notes</dt>
-            <dd>{kycCase.notes}</dd>
-          </>
-        ) : null}
-      </dl>
+    <AppShell title="KYC Review Queue" hubUrl={HUB_URL}>
+      <Link href="/" className="back-link">
+        ← back to queue
+      </Link>
+      <PageHeader
+        title={`Case #${kycCase.id} — ${kycCase.customerName}`}
+        actions={
+          <Badge tone={STATUS_TONE[kycCase.status] ?? "neutral"}>
+            {kycCase.status}
+          </Badge>
+        }
+      />
+      <Card>
+        <div className="def-grid">
+          <div>
+            <div className="def-label">Customer ID</div>
+            <div className="def-value">{kycCase.customerId}</div>
+          </div>
+          <div>
+            <div className="def-label">Risk tier</div>
+            <div className="def-value">{kycCase.riskTier}</div>
+          </div>
+          <div>
+            <div className="def-label">Status</div>
+            <div className="def-value">
+              {kycCase.status}
+              {kycCase.decidedById ? ` (by ${kycCase.decidedById})` : ""}
+            </div>
+          </div>
+          {kycCase.notes ? (
+            <div>
+              <div className="def-label">Notes</div>
+              <div className="def-value">{kycCase.notes}</div>
+            </div>
+          ) : null}
+        </div>
+      </Card>
 
-      <h2>Audit trail</h2>
+      <h2 className="section-title">
+        Audit trail <span className="count">({events.length})</span>
+      </h2>
       {events.length === 0 ? (
-        <p style={{ color: "#666" }}>No recorded activity yet.</p>
+        <EmptyState title="No recorded activity yet." />
       ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <div className="stack">
           {events.map((e) => (
-            <li
-              key={e.id}
-              style={{
-                border: "1px solid #e5e5e5",
-                borderRadius: 8,
-                padding: "10px 16px",
-                marginBottom: 8,
-                fontSize: 14,
-              }}
-            >
-              <strong>{e.action}</strong> by {e.actorId}
-              <div style={{ color: "#666", fontSize: 13 }}>
-                {e.createdAt.toISOString()}
-                {e.metadata ? ` — ${e.metadata}` : ""}
+            <Card key={e.id} className="card-compact">
+              <div className="row-between">
+                <span>
+                  <strong>{e.action}</strong>{" "}
+                  <Badge tone="neutral">{e.actorId}</Badge>
+                </span>
+                <span className="mono" style={{ fontSize: 12, color: "var(--fg-muted)" }}>
+                  {fmtTime(e.createdAt)}
+                </span>
               </div>
-            </li>
+              {e.metadata ? (
+                <Meta className="card-desc">
+                  <code>{e.metadata}</code>
+                </Meta>
+              ) : null}
+            </Card>
           ))}
-        </ul>
+        </div>
       )}
-    </main>
+    </AppShell>
   );
 }

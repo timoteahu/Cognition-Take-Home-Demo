@@ -1,14 +1,35 @@
 import { prisma } from "@internal-tools/framework";
+import {
+  AppShell,
+  Badge,
+  Card,
+  Meta,
+  PageHeader,
+  StatGrid,
+} from "@internal-tools/ui";
+import type { BadgeTone } from "@internal-tools/ui";
 import Link from "next/link";
 
 import { DemoControls } from "../components/demo-controls";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_ORDER = ["open", "evidence_submitted", "won", "lost"];
+const STATUS_ORDER = ["open", "evidence_submitted", "won", "lost"] as const;
+const ACTIVE_STATUSES = new Set(["open", "evidence_submitted"]);
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+  open: "warn",
+  evidence_submitted: "info",
+  won: "ok",
+  lost: "danger",
+};
+
+const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? "http://localhost:3000";
 
 const money = (cents: number, currency: string) =>
-  `${(cents / 100).toFixed(2)} ${currency}`;
+  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+    cents / 100,
+  );
 
 export default async function Disputes() {
   const disputes = await prisma.chargeback.findMany({
@@ -17,42 +38,71 @@ export default async function Disputes() {
   const counts = new Map<string, number>();
   for (const d of disputes) counts.set(d.status, (counts.get(d.status) ?? 0) + 1);
   const openExposure = disputes
-    .filter((d) => d.status === "open" || d.status === "evidence_submitted")
+    .filter((d) => ACTIVE_STATUSES.has(d.status))
     .reduce((sum, d) => sum + d.amountCents, 0);
+  const now = new Date();
 
   return (
-    <main style={{ maxWidth: 720, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1>Chargeback Manager</h1>
-      <p style={{ color: "#666" }}>
-        {disputes.length} disputes —{" "}
-        {STATUS_ORDER.map((s) => `${counts.get(s) ?? 0} ${s.replace("_", " ")}`).join(", ")}
-        {openExposure > 0 ? ` · ${money(openExposure, "USD")} at risk` : ""}
-      </p>
-      <DemoControls />
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {disputes.map((d) => (
-          <li
-            key={d.id}
-            style={{
-              border: "1px solid #e5e5e5",
-              borderRadius: 8,
-              padding: "12px 16px",
-              marginBottom: 8,
-            }}
-          >
-            <Link href={`/disputes/${d.id}`} style={{ textDecoration: "none" }}>
-              <strong>
-                #{d.id} — {d.cardholderName}
-              </strong>
-            </Link>
-            <div style={{ color: "#666", fontSize: 14 }}>
-              {d.transactionId} · {money(d.amountCents, d.currency)} · {d.reason} ·{" "}
-              {d.status.replace("_", " ")}
-              {d.deadline ? ` · due ${d.deadline.toISOString().slice(0, 10)}` : ""}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <AppShell title="Chargeback Manager" hubUrl={HUB_URL}>
+      <PageHeader
+        title="Chargeback Manager"
+        description="Track card disputes, evidence deadlines, and outcomes."
+        actions={<DemoControls />}
+      />
+      <StatGrid
+        stats={[
+          { label: "Total", value: disputes.length, tone: "neutral" },
+          ...STATUS_ORDER.map((s) => ({
+            label: s.replaceAll("_", " "),
+            value: counts.get(s) ?? 0,
+            tone: STATUS_TONE[s],
+          })),
+          {
+            label: "At risk",
+            value: money(openExposure > 0 ? openExposure : 0, "USD"),
+            tone: openExposure > 0 ? "warn" : "neutral",
+          },
+        ]}
+      />
+      <div className="stack">
+        {disputes.map((d) => {
+          const overdue =
+            d.deadline !== null &&
+            d.deadline < now &&
+            ACTIVE_STATUSES.has(d.status);
+          return (
+            <Card key={d.id}>
+              <div className="row-between">
+                <Link href={`/disputes/${d.id}`} className="card-title">
+                  #{d.id} — {d.cardholderName}
+                </Link>
+                <Badge tone={STATUS_TONE[d.status] ?? "neutral"}>
+                  {d.status.replaceAll("_", " ")}
+                </Badge>
+              </div>
+              <Meta className="card-desc">
+                <span>{d.transactionId}</span>
+                <span>·</span>
+                <span className="mono">{money(d.amountCents, d.currency)}</span>
+                <span>·</span>
+                <span>{d.reason.replaceAll("_", " ")}</span>
+                {d.deadline ? (
+                  <>
+                    <span>·</span>
+                    {overdue ? (
+                      <Badge tone="danger">
+                        overdue {d.deadline.toISOString().slice(0, 10)}
+                      </Badge>
+                    ) : (
+                      <span>due {d.deadline.toISOString().slice(0, 10)}</span>
+                    )}
+                  </>
+                ) : null}
+              </Meta>
+            </Card>
+          );
+        })}
+      </div>
+    </AppShell>
   );
 }
