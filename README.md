@@ -8,9 +8,9 @@ run — the database is a local SQLite file via Prisma.
 
 ```
 apps/                  # one folder per tool
-  starter/             # hub + reference tool (Next.js App Router), :3000
-  kyc-queue/           # KYC Review Queue, :3001
-  chargebacks/         # Chargeback Manager, :3002
+  hub/                 # single Next.js app serving every tool on :3000
+                       # (/ = tool directory, /kyc, /chargebacks)
+  starter/             # minimal reference tool + scaffold template
 packages/
   framework/           # shared infra: db, auth, RBAC, audit, health, testing
     prisma/            # shared schema, migrations, seed (SQLite dev.db)
@@ -53,13 +53,14 @@ npm run db:seed        # loads example tools + sample KYC cases / chargebacks
 ## Run
 
 ```bash
-npm run dev:all        # hub :3000, kyc-queue :3001, chargebacks :3002
+npm run dev            # all tools on one server at :3000
 ```
 
 The hub at http://localhost:3000 lists every registered tool; cards link to
-the tool's `url` from the `Tool` table (seeded to the local ports above,
-override with `KYC_QUEUE_URL` / `CHARGEBACKS_URL` before `db:seed`). Run a
-single app with `npm run dev -w <name>`.
+the tool's `url` from the `Tool` table (seeded to `/kyc` and `/chargebacks`,
+served by the same app — no separate ports). The tools share the framework's
+auth, permissions, audit trail, and database, so every tool is protected
+identically.
 
 Dev tokens (framework defaults, dev-only): `dev-viewer-token` (read),
 `dev-builder-token` (read/write), `dev-admin-token` (all).
