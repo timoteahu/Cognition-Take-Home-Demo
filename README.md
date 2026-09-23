@@ -1,13 +1,14 @@
 # Cognition Take Home Demo
 
 Starter for building internal tools with Devin: a shared framework package that
-every tool reuses, plus one workspace folder per tool. No external services to
-run — the database is a local SQLite file via Prisma.
+every tool reuses, and a single hub app that serves every tool as a route. No
+external services to run — the database is a local SQLite file via Prisma.
+New tools are built by following [`docs/PLAYBOOK.md`](docs/PLAYBOOK.md).
 
 ## Layout
 
 ```
-apps/                  # one folder per tool
+apps/
   hub/                 # single Next.js app serving every tool on :3000
                        # (/ = tool directory, /kyc, /chargebacks)
   starter/             # minimal reference tool + scaffold template
@@ -29,7 +30,7 @@ Every tool gets these for free by importing `@internal-tools/framework`:
   swappable for real SSO/directory in production)
 - `requirePermission` / `registerRole` — role-based permissions
 - `withAuth(permission, handler)` — wraps a route handler so auth + permission
-  checks are one line (see `apps/starter/app/api/tools/route.ts`)
+  checks are one line (see `apps/hub/app/api/cases/route.ts`)
 - `logAudit` / `listAuditEvents` — append-only audit trail on the shared db
   (who did what — required for regulated workflows like KYC/refunds)
 - `createHealthHandler(name)` — standard `GET /api/health` endpoint per tool
