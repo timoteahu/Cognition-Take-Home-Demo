@@ -42,6 +42,8 @@ UI primitives (`AppShell`, `Card`, `Badge`, `StatGrid`, …) live in
 
 ## Setup
 
+Requires Node 22+ (CI runs on Node 22; `nvm use` picks it up from `.nvmrc`).
+
 One-time (or after pulling schema changes):
 
 ```bash
