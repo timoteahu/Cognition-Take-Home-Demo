@@ -1,6 +1,6 @@
 ---
 name: testing-internal-tools
-description: How to run and end-to-end test the internal-tools npm-workspaces repo (starter Next.js app, framework package, dev tokens, SQLite DB).
+description: How to run and end-to-end test the internal-tools npm-workspaces repo (hub Next.js app serving all tools, framework + ui packages, dev tokens, SQLite DB).
 ---
 
 # Testing the internal-tools monorepo
@@ -11,8 +11,9 @@ description: How to run and end-to-end test the internal-tools npm-workspaces re
 - If deps/DB are missing: `npm install`, `npx prisma generate`, `npm run db:migrate`, `npm run db:seed` (all from repo root).
 
 ## Running the app
-- `npm run dev` at repo root serves `apps/starter` on http://localhost:3000 (Next.js 16/Turbopack, ready in ~250ms).
-- A scaffolded tool runs with `npm run dev -w <name> -- -p <port>` — pass a port or it collides with :3000.
+- `npm run dev` at repo root serves `apps/hub` on http://localhost:3000 (Next.js 16/Turbopack, ready in ~400ms). All tools are routes of this one app: `/` = tool directory, `/kyc`, `/chargebacks`.
+- Don't paste README commands with trailing `# comments` — npm passes `#` through as an argument and the command fails.
+- A split-out tool (see Scaffolding) runs with `npm run dev -w <name> -- -p <port>` — pass a port or it collides with :3000.
 
 ## Auth for API testing (curl is the intended path — no UI form exists)
 Bearer tokens, defined in `packages/framework/src/auth.ts` (overridable via `TOOL_DEV_TOKENS` env JSON):
@@ -27,15 +28,17 @@ Bearer tokens, defined in `packages/framework/src/auth.ts` (overridable via `TOO
 - `GET /api/health` (no auth) → `{status:"ok", app:"<name>", time}`.
 - Inspect DB/audit rows from repo root: `node -e "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.auditEvent.findMany().then(r=>console.log(r)).finally(()=>p.$disconnect())"` (escape `$` in shell).
 
-## Real tools built on the framework
-- `kyc-queue`: `GET/POST /api/cases`, `GET/PATCH /api/cases/[id]` (PATCH `{decision: approve|reject|escalate}`); `kyc:read`/`kyc:write` perms; `KycCase` model; queue UI at `/`, detail+audit trail at `/cases/[id]`.
-- `chargebacks`: `GET/POST /api/disputes`, `GET/PATCH /api/disputes/[id]` (PATCH `{action: submit_evidence|win|lose}`); `chargebacks:read`/`chargebacks:write` perms; `Chargeback` model; disputes UI at `/`, detail+audit trail at `/disputes/[id]`.
-- Both apps have `POST /api/demo/reset` (`<tool>:write`) which wipes the entity + its audit events and restores `lib/demo-data.ts`'s canned set, logging a `demo.reset` audit event. The queue pages have "Add random X" / "Reset demo data" buttons (client component) driving the same API with the dev-builder token.
-- The starter hub at :3000 links each registered `Tool` card to its `url` (seeded :3001/:3002, override via `KYC_QUEUE_URL`/`CHARGEBACKS_URL`). `npm run dev:all` boots hub + both tools.
+## Real tools built on the framework (all inside `apps/hub`)
+- KYC: `GET/POST /api/cases`, `GET/PATCH /api/cases/[id]` (PATCH `{decision: approve|reject|escalate}`); `kyc:read`/`kyc:write` perms; `KycCase` model; queue UI at `/kyc`, detail+audit trail at `/kyc/cases/[id]`.
+- Chargebacks: `GET/POST /api/disputes`, `GET/PATCH /api/disputes/[id]` (PATCH `{action: submit_evidence|win|lose}`); `chargebacks:read`/`chargebacks:write` perms; `Chargeback` model; UI at `/chargebacks`, detail+audit trail at `/chargebacks/disputes/[id]`.
+- Tool perms are registered in `apps/hub/lib/permissions.ts` via `registerRole`.
+- `POST /api/demo/reset/[tool]` (`tool` = `kyc`|`chargebacks`, needs `<tool>:write`) wipes the entity + its audit events and restores the canned set from `apps/hub/lib/demo-data.mjs`, logging a `demo.reset` audit event. Tool pages have "Add random X" / "Reset demo data" buttons driving the same API with the dev-builder token.
+- `demo-data.mjs` must stay plain JS: `packages/framework/prisma/seed.mjs` imports it under plain Node 20, which can't load `.ts`.
+- The hub `/` links each registered `Tool` card to its `url` (seeded to `/kyc`, `/chargebacks`).
 - Tests: `npx vitest run` at root runs all suites (framework + per-app); they hit the real dev.db, so run `npx prisma migrate deploy` first on a fresh checkout (CI does this in `.github/workflows/ci.yml`).
 - Vitest writes rows permanently into dev.db (cases/disputes/audit events) — verify UI counts and seeded expectations BEFORE running vitest, or expect drift.
 
-## Scaffolding
+## Scaffolding (optional — only to split a tool into its own app)
 - `npm run new-tool -- <kebab-case-name>` copies `apps/starter` → `apps/<name>`, rewrites package name + layout title + `createHealthHandler("<name>")`, strips `.next`/`node_modules`. Then `npm install` (creates workspace symlink) before dev. Verify the health handler reports the new app name.
 - New tools must import a `lib/permissions.ts` that calls `registerRole` to grant `<tool>:read`/`<tool>:write` onto viewer/builder — never edit `ROLE_PERMISSIONS` in the framework.
 - New entities go in `packages/framework/prisma/schema.prisma` + `npm run db:migrate`; remove the copied `app/api/tools` route (starter-registry demo, not the tool's own API).

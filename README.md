@@ -17,7 +17,7 @@ packages/
     test/              # framework test suite (vitest)
   ui/                  # shared design system (theme tokens + React primitives)
 scripts/
-  create-tool.mjs      # scaffolds a new tool under apps/
+  create-tool.mjs      # optional: splits a tool into its own app under apps/
 ```
 
 ## What the framework provides
@@ -75,15 +75,18 @@ curl localhost:3000/api/health
 `npm run lint`, `npm test`, and `npm run build` all run across workspaces and
 are enforced by `.github/workflows/ci.yml` on every PR.
 
-## Adding a new tool
+## Running a tool as its own app (optional)
+
+The demo serves every tool from the hub. If a tool later needs its own
+deploy, release cadence, or ownership boundary, it can be split out:
 
 ```bash
 npm run new-tool -- <kebab-case-name>   # scaffolds apps/<name> from starter
 ```
 
-Then: keep business logic in the app's own routes/components; use the framework
-for auth, permissions, audit, and the db client — don't reimplement them. New
-data shapes go in `packages/framework/prisma/schema.prisma` + `npm run db:migrate`.
+The new app keeps the same framework and UI packages, so auth, permissions,
+audit, and the shared database behave identically. Point its `Tool.url` at
+wherever it is deployed and the hub links to it like any other tool.
 
 `packages/framework` is pure TypeScript (no Next.js dependency), so the same
 auth/permissions/db layer can back any app type, not just Next.
