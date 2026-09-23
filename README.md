@@ -37,11 +37,18 @@ Every tool gets these for free by importing `@internal-tools/framework`:
 
 ## Setup
 
+One-time (or after pulling schema changes):
+
 ```bash
 npm install            # installs all workspaces
 cp .env.example .env   # DATABASE_URL points at the shared sqlite file
 npm run db:migrate     # applies packages/framework/prisma migrations
 npm run db:seed        # loads example tools + sample KYC cases / chargebacks
+```
+
+## Run
+
+```bash
 npm run dev:all        # hub :3000, kyc-queue :3001, chargebacks :3002
 ```
 
