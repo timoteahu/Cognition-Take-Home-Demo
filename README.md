@@ -53,7 +53,7 @@ npm run db:seed        # loads example tools + sample KYC cases / chargebacks
 ## Run
 
 ```bash
-npm run dev            # all tools on one server at :3000
+npm run dev
 ```
 
 The hub at http://localhost:3000 lists every registered tool; cards link to
