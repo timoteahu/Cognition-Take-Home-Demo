@@ -30,6 +30,8 @@ Bearer tokens, defined in `packages/framework/src/auth.ts` (overridable via `TOO
 ## Real tools built on the framework
 - `kyc-queue`: `GET/POST /api/cases`, `GET/PATCH /api/cases/[id]` (PATCH `{decision: approve|reject|escalate}`); `kyc:read`/`kyc:write` perms; `KycCase` model; queue UI at `/`, detail+audit trail at `/cases/[id]`.
 - `chargebacks`: `GET/POST /api/disputes`, `GET/PATCH /api/disputes/[id]` (PATCH `{action: submit_evidence|win|lose}`); `chargebacks:read`/`chargebacks:write` perms; `Chargeback` model; disputes UI at `/`, detail+audit trail at `/disputes/[id]`.
+- Both apps have `POST /api/demo/reset` (`<tool>:write`) which wipes the entity + its audit events and restores `lib/demo-data.ts`'s canned set, logging a `demo.reset` audit event. The queue pages have "Add random X" / "Reset demo data" buttons (client component) driving the same API with the dev-builder token.
+- The starter hub at :3000 links each registered `Tool` card to its `url` (seeded :3001/:3002, override via `KYC_QUEUE_URL`/`CHARGEBACKS_URL`). `npm run dev:all` boots hub + both tools.
 - Tests: `npx vitest run` at root runs all suites (framework + per-app); they hit the real dev.db, so run `npx prisma migrate deploy` first on a fresh checkout (CI does this in `.github/workflows/ci.yml`).
 - Vitest writes rows permanently into dev.db (cases/disputes/audit events) — verify UI counts and seeded expectations BEFORE running vitest, or expect drift.
 

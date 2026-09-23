@@ -1,6 +1,8 @@
 import { prisma } from "@internal-tools/framework";
 import Link from "next/link";
 
+import { DemoControls } from "../components/demo-controls";
+
 export const dynamic = "force-dynamic";
 
 const STATUS_ORDER = ["open", "evidence_submitted", "won", "lost"];
@@ -26,6 +28,7 @@ export default async function Disputes() {
         {STATUS_ORDER.map((s) => `${counts.get(s) ?? 0} ${s.replace("_", " ")}`).join(", ")}
         {openExposure > 0 ? ` · ${money(openExposure, "USD")} at risk` : ""}
       </p>
+      <DemoControls />
       <ul style={{ listStyle: "none", padding: 0 }}>
         {disputes.map((d) => (
           <li

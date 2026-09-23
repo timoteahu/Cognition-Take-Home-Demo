@@ -1,6 +1,8 @@
 import { prisma } from "@internal-tools/framework";
 import Link from "next/link";
 
+import { DemoControls } from "../components/demo-controls";
+
 export const dynamic = "force-dynamic";
 
 const STATUS_ORDER = ["pending", "escalated", "approved", "rejected"];
@@ -19,6 +21,7 @@ export default async function KycQueue() {
         {cases.length} cases —{" "}
         {STATUS_ORDER.map((s) => `${counts.get(s) ?? 0} ${s}`).join(", ")}
       </p>
+      <DemoControls />
       <ul style={{ listStyle: "none", padding: 0 }}>
         {cases.map((c) => (
           <li
