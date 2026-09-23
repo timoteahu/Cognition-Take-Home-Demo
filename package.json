@@ -7,8 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev -w starter",
-    "dev:all": "npm run dev -w starter & npm run dev -w kyc-queue & npm run dev -w chargebacks & wait",
+    "dev": "npm run dev -w hub",
     "build": "npm run build --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "db:migrate": "prisma migrate dev",

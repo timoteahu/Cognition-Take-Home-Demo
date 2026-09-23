@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { demoCases } from "../../../apps/kyc-queue/lib/demo-data.ts";
-import { demoDisputes } from "../../../apps/chargebacks/lib/demo-data.ts";
+import { demoCases, demoDisputes } from "../../../apps/hub/lib/demo-data.ts";
 
 const prisma = new PrismaClient();
 
@@ -8,12 +7,12 @@ const tools = [
   {
     name: "KYC Review Queue",
     description: "Triage and decision customer identity-verification cases.",
-    url: process.env.KYC_QUEUE_URL ?? "http://localhost:3001",
+    url: "/kyc",
   },
   {
     name: "Chargeback Manager",
     description: "Track, evidence, and respond to disputed card transactions.",
-    url: process.env.CHARGEBACKS_URL ?? "http://localhost:3002",
+    url: "/chargebacks",
   },
 ];
 
